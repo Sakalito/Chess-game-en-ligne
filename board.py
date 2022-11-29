@@ -15,13 +15,9 @@ class Board:
     def __init__(self, rows, cols):
         self.rows = rows
         self.cols = cols
-
         self.ready = False
-
         self.last = None
-
         self.copy = True
-
         self.board = [[0 for x in range(8)] for _ in range(rows)]
 
         self.board[0][0] = Rook(0, 0, "b")
@@ -62,17 +58,12 @@ class Board:
 
         self.p1Name = "Player 1"
         self.p2Name = "Player 2"
-
         self.turn = "w"
-
         self.time1 = 900
         self.time2 = 900
-
         self.storedTime1 = 0
         self.storedTime2 = 0
-
         self.winner = None
-
         self.startTime = time.time()
 
     def update_moves(self):

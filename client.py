@@ -2,7 +2,7 @@ import socket
 import pickle
 import time
 
-class Network:
+class Client:
     def __init__(self):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.host = "localhost"
@@ -10,19 +10,15 @@ class Network:
         self.addr = (self.host, self.port)
         self.board = self.connect()
         self.board = pickle.loads(self.board)
-
+    #connnexion au serveur
     def connect(self):
         self.client.connect(self.addr)
         return self.client.recv(4096*8)
-
+    #deconnexion
     def disconnect(self):
         self.client.close()
-
+    #Envoi des data
     def send(self, data, pick=False):
-        """
-        :param data: str
-        :return: str
-        """
         start_time = time.time()
         while time.time() - start_time < 5:
             try:

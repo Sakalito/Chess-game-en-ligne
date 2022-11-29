@@ -1,28 +1,30 @@
 import pygame
 import os
 import time
-from client import Network
+from client import Client
 import pickle
 pygame.font.init()
 
+# INITIALISATION DU JEU 
 board = pygame.transform.scale(pygame.image.load(os.path.join("img","board_alt.png")), (750, 750))
-chessbg = pygame.image.load(os.path.join("img", "chessbg.png"))
+ChessSet = pygame.image.load(os.path.join("img", "ChessSet.jpg"))
 rect = (113,113,525,525)
-
+#INITIALISATION DE A QUI LE TOUR (BLANC) EN FIRST
 turn = "w"
 
-
+#ECRAN DU MENU
 def menu_screen(win, name):
-    global bo, chessbg
+    global bo, ChessSet
     run = True
     offline = False
-
+    #tant que le menu est ouvert, 
     while run:
-        win.blit(chessbg, (0,0))
+        win.blit(ChessSet, (0, 0))
         small_font = pygame.font.SysFont("comicsans", 50)
-        
+        #si le serveur est eteint, l'écrire sur la fenetre
         if offline:
-            off = small_font.render("Server Offline, Try Again Later...", 1, (255, 0, 0))
+            off = small_font.render(
+                "Le serveur est off !", 1, (255, 0, 0))
             win.blit(off, (width / 2 - off.get_width() / 2, 500))
 
         pygame.display.update()
@@ -31,7 +33,7 @@ def menu_screen(win, name):
             if event.type == pygame.QUIT:
                 pygame.quit()
                 run = False
-
+            #connexion au serveur de jeu
             if event.type == pygame.MOUSEBUTTONDOWN:
                 offline = False
                 try:
@@ -39,12 +41,12 @@ def menu_screen(win, name):
                     run = False
                     main()
                     break
+                #print sur la console le serveur est off 
                 except:
-                    print("Server Offline")
+                    print("Le serveur est off !")
                     offline = True
 
-
-    
+# MIS A JOUR DU JEU
 def redraw_gameWindow(win, bo, p1, p2, color, ready):
     win.blit(board, (0, 0))
     bo.draw(win, color)
@@ -64,41 +66,41 @@ def redraw_gameWindow(win, bo, p1, p2, color, ready):
         print(e)
     win.blit(txt, (520,10))
     win.blit(txt2, (520, 700))
-
-    txt = font.render("Press q to Quit", 1, (255, 255, 255))
+    
+    txt = font.render("Appuyez sur q pour quitter", 1, (255, 255, 255))
     win.blit(txt, (10, 20))
 
     if color == "s":
-        txt3 = font.render("SPECTATOR MODE", 1, (255, 0, 0))
+        txt3 = font.render("MODE SPECTATEUR", 1, (255, 0, 0))
         win.blit(txt3, (width/2-txt3.get_width()/2, 10))
 
     if not ready:
-        show = "Waiting for Player"
+        show = "ATtente de joueurs..."
         if color == "s":
-            show = "Waiting for Players"
+            show = "Attente de joueurs..."
         font = pygame.font.SysFont("comicsans", 80)
         txt = font.render(show, 1, (255, 0, 0))
         win.blit(txt, (width/2 - txt.get_width()/2, 300))
-
+    #annonce la couleur des joueur + annonce quand c'est le tour  d'un joueur
     if not color == "s":
         font = pygame.font.SysFont("comicsans", 30)
         if color == "w":
-            txt3 = font.render("YOU ARE WHITE", 1, (255, 0, 0))
+            txt3 = font.render("TU JOUES LES BLANCS", 1, (255, 0, 0))
             win.blit(txt3, (width / 2 - txt3.get_width() / 2, 10))
         else:
-            txt3 = font.render("YOU ARE BLACK", 1, (255, 0, 0))
+            txt3 = font.render("TU JOUES LES NOIRS", 1, (255, 0, 0))
             win.blit(txt3, (width / 2 - txt3.get_width() / 2, 10))
 
         if bo.turn == color:
-            txt3 = font.render("YOUR TURN", 1, (255, 0, 0))
+            txt3 = font.render("C'EST TON TOUR", 1, (255, 0, 0))
             win.blit(txt3, (width / 2 - txt3.get_width() / 2, 700))
         else:
-            txt3 = font.render("THEIR TURN", 1, (255, 0, 0))
+            txt3 = font.render("C'EST SON TOUR", 1, (255, 0, 0))
             win.blit(txt3, (width / 2 - txt3.get_width() / 2, 700))
 
     pygame.display.update()
 
-
+# ECRAN DE LA FIN DU JEU
 def end_screen(win, text):
     pygame.font.init()
     font = pygame.font.SysFont("comicsans", 80)
@@ -137,24 +139,25 @@ def click(pos):
 
     return -1, -1
 
-
+#connexion au client
 def connect():
     global n
-    n = Network()
+    n = Client()
     return n.board
 
-
+#main
 def main():
+    # INITIALISATION DES VARAIBLES
     global turn, bo, name
-
     color = bo.start_user
     count = 0
-
+    #envoie l'état des mouvements au serveur
     bo = n.send("update_moves")
+    #envoie le nom au serveur
     bo = n.send("name " + name)
     clock = pygame.time.Clock()
     run = True
-
+    #TANT QUE LE JEU TOURNE, JOUER 
     while run:
         if not color == "s":
             p1Time = bo.time1
@@ -165,15 +168,15 @@ def main():
             else:
                 count += 1
             clock.tick(30)
-
+        # METTRE A JOUR LE JEU
         try:
             redraw_gameWindow(win, bo, p1Time, p2Time, color, bo.ready)
         except Exception as e:
             print(e)
-            end_screen(win, "Other player left")
+            end_screen(win, "Ton adversaire a quitté la partie !")
             run = False
             break
-
+        #SI LE TEMPS EST ECOULER/ECHEC ET MATH DU COTE WHITE ALORS LE BLACK GG SIONON CONTRAIRE
         if not color == "s":
             if p1Time <= 0:
                 bo = n.send("winner b")
@@ -184,51 +187,53 @@ def main():
                 bo = n.send("winner b")
             elif bo.check_mate("w"):
                 bo = n.send("winner w")
-
+        #AFFICHE SUR L ECRAN LE WINNER
         if bo.winner == "w":
             end_screen(win, "White is the Winner!")
             run = False
         elif bo.winner == "b":
             end_screen(win, "Black is the winner")
             run = False
-
+        #quitte le jeu
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
                 pygame.quit()
                 quit()
 
-
+            #ENVOIE AU SERVEUR LES DATA DEQUI A GG
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_q and color != "s":
-                    # quit game
                     if color == "w":
                         bo = n.send("winner b")
                     else:
                         bo = n.send("winner w")
-
+                #AVANCER LE JEU (spectateur)
                 if event.key == pygame.K_RIGHT:
                     bo = n.send("forward")
-
+                #RECULER LE JEU (spectateur)
                 if event.key == pygame.K_LEFT:
                     bo = n.send("back")
 
-
+            #ENVOIE LES DONNEES DES MOUVEMENTS AU SERVEUR
             if event.type == pygame.MOUSEBUTTONUP and color != "s":
                 if color == bo.turn and bo.ready:
                     pos = pygame.mouse.get_pos()
                     bo = n.send("update moves")
                     i, j = click(pos)
                     bo = n.send("select " + str(i) + " " + str(j) + " " + color)
-    
+    #deconnexion 
     n.disconnect()
     bo = 0
     menu_screen(win)
 
-
-name = input("Please type your name: ")
+#nom dans la console
+name = input("Entrez votre nom : ")
+#taille de l'écran
 width = 750
 height = 750
+# DECLARE LA VARIABLE WIN
 win = pygame.display.set_mode((width, height))
+# TITRE DE L APPLICATION
 pygame.display.set_caption("Chess Game")
 menu_screen(win, name)
